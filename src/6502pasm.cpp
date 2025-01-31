@@ -26,6 +26,9 @@ int Assembler::assemble() {
         if (lineType == LINE_UNKNOWN) {
             printf("Unknown line: '%s'\n",line.c_str());
         }
+        if (lineType == LINE_LABEL) {
+            parseLabel(lineNoComment);
+        }
     }
     return 0;
 }
@@ -47,5 +50,20 @@ LineType Assembler::getLineType(std::string line) {
 }
 
 int Assembler::parseLabel(std::string line) {
+    std::smatch m;
+    std::regex_match(line,m,labelPattern);
+
+    if (DEBUG) {
+        printf("Parsing label: '%s'\n",line.c_str());
+        int i=0;
+        for (auto group : m) {
+            printf("\tgroup %d: '%s'\n",i,group.str().c_str());
+            i++;
+        }
+    }
+
+    std::string name = m[1];
+    labels.push_back((Label){name,-1});
+
     return 0;
 }

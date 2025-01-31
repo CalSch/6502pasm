@@ -3,6 +3,8 @@
 #include <vector>
 #include <regex>
 
+#define DEBUG 0
+
 // patterns
 extern std::regex labelPattern;
 extern std::regex instructionPattern;
@@ -40,6 +42,8 @@ class Assembler {
 public:
     std::vector<std::string> input_lines;
     std::vector<char> output;
+
+    std::vector<Label> labels;
 
     Assembler() {}
 

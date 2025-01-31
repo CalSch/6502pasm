@@ -9,7 +9,7 @@ mul_loop:
     cpy #$00
     beq mul_end
     dey
-    adc $00, X
+    adc $00,X
     jmp mul_loop
 mul_end:
     rts

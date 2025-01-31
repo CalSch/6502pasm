@@ -4,8 +4,9 @@
 #include <regex>
 
 // patterns
-std::regex labelPattern("([a-zA-Z0-9_]):");
-std::regex instructionPattern("^\\s*([a-zA-Z]+)( ([^,]*)(,(\\w))?)?\\s*$");
+extern std::regex labelPattern;
+extern std::regex instructionPattern;
+extern std::regex directivePattern;
 
 enum AddressMode {
     ADDR_ACCUMULATOR,
@@ -27,8 +28,13 @@ enum LineType {
     LINE_EMPTY,
     LINE_INSTRUCTION,
     LINE_LABEL,
+    LINE_DIRECTIVE,
 };
 
+struct Label {
+    std::string name;
+    int address;
+};
 
 class Assembler {
 public:
@@ -38,6 +44,8 @@ public:
     Assembler() {}
 
     LineType getLineType(std::string line);
+
+    int parseLabel(std::string line);
 
     int assembleInstruction();
 

@@ -27,7 +27,7 @@ int main() {
     }
     printf("Labels (%d labels):\n",assembler.labels.size());
     for (Label l : assembler.labels) {
-        printf("  %s @ 0x%04x\n",l.name.c_str(),l.address);
+        printf("  %s @ 0x%04x\n",l.name.c_str(),l.location);
     }
 
     return 0;

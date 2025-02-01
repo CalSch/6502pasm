@@ -35,7 +35,7 @@ enum LineType {
 
 struct Label {
     std::string name;
-    int address;
+    int location;
 };
 
 class Assembler {

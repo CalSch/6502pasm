@@ -71,7 +71,7 @@ struct AssembledInstruction {
 class Assembler {
 public:
     std::vector<std::string> input_lines;
-    std::vector<unsigned char> output;
+    std::vector<unsigned char> output_bytes;
 
     std::vector<Label> labels;
     std::vector<Macro> macros;

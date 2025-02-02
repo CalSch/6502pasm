@@ -17,11 +17,11 @@ int main() {
 
     assembler.assemble();
 
-    printf("Output hex (%d bytes):\n",assembler.output.size());
-    for (int i=0;i<assembler.output.size();i++) {
+    printf("Output hex (%d bytes):\n",assembler.output_bytes.size());
+    for (int i=0;i<assembler.output_bytes.size();i++) {
         if (i%8==0)
             printf("  ");
-        printf("%02x ",assembler.output[i]);
+        printf("%02x ",assembler.output_bytes[i]);
         if (i%8==7)
             printf("\n");
     }

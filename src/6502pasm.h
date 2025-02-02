@@ -9,8 +9,10 @@
 
 // patterns
 extern std::regex labelPattern;
+extern std::regex labelLinePattern;
 extern std::regex instructionPattern;
 extern std::regex directivePattern;
+extern std::regex macroPattern;
 
 extern std::regex immediatePattern;
 extern std::regex zeropagePattern;
@@ -61,11 +63,15 @@ struct Instruction {
     std::string mnemonic;
     Address addr;
 };
+struct AssembledInstruction {
+    Instruction orig;
+    std::vector<unsigned char> bytes;
+};
 
 class Assembler {
 public:
     std::vector<std::string> input_lines;
-    std::vector<char> output;
+    std::vector<unsigned char> output;
 
     std::vector<Label> labels;
     std::vector<Macro> macros;
@@ -77,11 +83,22 @@ public:
     // Turns a string into an `Address`
     Address parseAddress(std::string addr);
     // Create and add a `Label` struct from a line
-    // Note: implies that the `labelPattern` already matches the line (No error handling!)
+    // Note: implies that the `labelLinePattern` already matches the line (No error handling!)
     Label parseLabel(std::string line);
     Instruction parseInstruction(std::string line);
 
-    int assembleInstruction(Instruction inst);
+    AssembledInstruction assembleInstruction(Instruction inst);
 
     int assemble();
 };
+
+size_t string_split(const std::string &txt, std::vector<std::string> &strs, char ch);
+
+#define VALUE_L -1
+#define VALUE_H -2
+#define RELATIVE_ADDR -3
+
+// Opcode table taken from http://www.dabeaz.com/superboard/asm6502.py
+// and translated into C++ with ChatGPT, so if it doesn't work blame them
+// VALUE_L,VALUE_H, and RELATIVE_ADDR should be replaced with their respective values
+extern std::map<std::string, std::map<AddressMode, std::vector<int>>> opcode_lut;

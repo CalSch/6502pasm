@@ -1,10 +1,12 @@
 ; this code isn't tested to be functional or good, just a syntax demo
 
+.macro cool_macro #$05
+
 .org #$0800
     jmp main
 
 mul: ; Multiply the values at X and Y (zeropage)
-    lda #$0
+    lda #$00
 mul_loop:
     cpy #$00
     beq mul_end
@@ -16,9 +18,8 @@ mul_end:
 main:
     ldx #$01 ; immediate addressing
     LDY #$02 ; capital mnemonic
-    lda #$05
+    lda %cool_macro ; expands #$05
     sta $00,X ; zeropage X
     lda #$03
-    sta $00,Y
     jsr mul ; subroutine
 

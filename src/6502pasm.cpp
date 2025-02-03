@@ -269,7 +269,6 @@ AssembledInstruction Assembler::assembleInstruction(Instruction inst, int pc) {
                 } else if (byte==VALUE_H) {
                     out.bytes.push_back(inst.addr.location >> 8);
                 } else if (byte==RELATIVE_ADDR) {
-                    // TODO: implement RELATIVE_ADDR
                     out.bytes.push_back((inst.addr.location-(pc+2))&0xff);
                 } else {
                     out.bytes.push_back(byte & 0xff);

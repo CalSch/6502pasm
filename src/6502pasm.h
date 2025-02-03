@@ -87,7 +87,7 @@ public:
     Label parseLabel(std::string line);
     Instruction parseInstruction(std::string line);
 
-    AssembledInstruction assembleInstruction(Instruction inst);
+    AssembledInstruction assembleInstruction(Instruction inst,int pc);
 
     void insertOutputBytes(std::vector<unsigned char> bytes, int location);
 

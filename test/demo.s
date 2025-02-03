@@ -2,7 +2,7 @@
 
 .macro cool_macro #$05
 
-.org #$010
+.org $0010
     jmp main
 
 mul: ; Multiply the values at X and Y (zeropage)

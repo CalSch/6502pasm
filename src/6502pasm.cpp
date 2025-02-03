@@ -27,79 +27,86 @@ void Assembler::insertOutputBytes(std::vector<unsigned char> bytes, int location
 }
 
 int Assembler::assemble() {
-    int pc = 0; // keeps track of the current position in the binary
-    for (int lineIdx=0;lineIdx<input_lines.size();lineIdx++) {
-        std::string line = input_lines[lineIdx];
-        bool hasComment = false;
-        int commentIndex = -1;
-        for (int i=0;i<line.size();i++) { // find a semicolon
-            if (line[i]==';') {
-                hasComment = true;
-                commentIndex = i;
-                break;
-            }
-        }
-        std::string lineNoComment = hasComment ? line.substr(0,commentIndex) : line;
-        LineType lineType = getLineType(lineNoComment);
-        if (lineType == LINE_UNKNOWN) {
-            printf("Unknown line: '%s'\n",line.c_str());
-        }
-        if (lineType == LINE_LABEL) {
-            Label label = parseLabel(lineNoComment);
-            label.location = pc;
-            labels.push_back(label);
-        }
-        if (lineType == LINE_INSTRUCTION) {
-            Instruction inst = parseInstruction(lineNoComment);
-            AssembledInstruction asmInst = assembleInstruction(inst);
-            if (DEBUG) {
-                // printf("Instruction: '%s '")
-                printf("Assembled: ");
-                for (unsigned char byte : asmInst.bytes) {
-                    printf("%02x ",byte);
-                }
-                printf("\n");
-            }
-            insertOutputBytes(asmInst.bytes,pc);
-            pc += asmInst.bytes.size();
-        }
-        if (lineType == LINE_DIRECTIVE) {
-            std::smatch m;
-            std::regex_match(lineNoComment,m,directivePattern);
-            if (DEBUG) {
-                printf("Parsing directive: '%s'\n",lineNoComment.c_str());
-                int i=0;
-                for (auto group : m) {
-                    printf("\tgroup %d: '%s'\n",i,group.str().c_str());
-                    i++;
+    for (int pass=1;pass<=2;pass++) { // do 2 passes
+        if (DEBUG) printf("** Starting pass %d **\n",pass);
+        int pc = 0; // keeps track of the current position in the binary/
+        for (int lineIdx=0;lineIdx<input_lines.size();lineIdx++) {
+            std::string line = input_lines[lineIdx];
+            bool hasComment = false;
+            int commentIndex = -1;
+            for (int i=0;i<line.size();i++) { // find a semicolon
+                if (line[i]==';') {
+                    hasComment = true;
+                    commentIndex = i;
+                    break;
                 }
             }
-            std::string name = m[1].str();
-            // convert to lowercase
-            std::transform(name.begin(), name.end(), name.begin(),
-                [](unsigned char c){ return std::tolower(c); });
-            std::vector<std::string> args;
-            string_split(m[3].str(),args,' ');
-            if (DEBUG) {
-                int i=0;
-                for (auto arg : args) {
-                    printf("\tArgument %d: '%s'\n",i,arg.c_str());
-                    i++;
+            std::string lineNoComment = hasComment ? line.substr(0,commentIndex) : line;
+            LineType lineType = getLineType(lineNoComment);
+            if (lineType == LINE_UNKNOWN) {
+                printf("Unknown line: '%s'\n",line.c_str());
+            }
+            if (lineType == LINE_LABEL) {
+                if (pass==1) {
+                    Label label = parseLabel(lineNoComment);
+                    label.location = pc;
+                    labels.push_back(label);
                 }
             }
-            if (name=="org") {
-                if (args.size()>=1) {
-                    pc = std::stoi(args[0].substr(2));
+            if (lineType == LINE_INSTRUCTION) {
+                Instruction inst = parseInstruction(lineNoComment);
+                AssembledInstruction asmInst = assembleInstruction(inst,pc);
+                if (DEBUG) {
+                    // printf("Instruction: '%s '")
+                    printf("Assembled: ");
+                    for (unsigned char byte : asmInst.bytes) {
+                        printf("%02x ",byte);
+                    }
+                    printf("\n");
                 }
-            } else if (name=="macro") {
-                if (args.size()==2) {
-                    Macro macro = (Macro){args[0],args[1]};
-                    macros.push_back(macro);
-                    if (DEBUG) printf("\tAdded macro %%%s = %s\n",macro.name.c_str(),macro.text.c_str());
+                if (pass==2) insertOutputBytes(asmInst.bytes,pc);
+                pc += asmInst.bytes.size();
+            }
+            if (lineType == LINE_DIRECTIVE) {
+                // TODO: maybe put this into a parseDirective function
+                std::smatch m;
+                std::regex_match(lineNoComment,m,directivePattern);
+                if (DEBUG) {
+                    printf("Parsing directive: '%s'\n",lineNoComment.c_str());
+                    int i=0;
+                    for (auto group : m) {
+                        printf("\tgroup %d: '%s'\n",i,group.str().c_str());
+                        i++;
+                    }
+                }
+                std::string name = m[1].str();
+                // convert to lowercase
+                std::transform(name.begin(), name.end(), name.begin(),
+                    [](unsigned char c){ return std::tolower(c); });
+                std::vector<std::string> args;
+                string_split(m[3].str(),args,' ');
+                if (DEBUG) {
+                    int i=0;
+                    for (auto arg : args) {
+                        printf("\tArgument %d: '%s'\n",i,arg.c_str());
+                        i++;
+                    }
+                }
+                if (name=="org") {
+                    if (args.size()>=1) {
+                        // printf("'%s'\n",args[0].substr(1));
+                        pc = std::stoi(args[0].substr(1),0,16);
+                    }
+                } else if (name=="macro" && pass==1) { // Only parse macros on the first pass
+                    if (args.size()==2) {
+                        Macro macro = (Macro){args[0],args[1]};
+                        macros.push_back(macro);
+                        if (DEBUG) printf("\tAdded macro %%%s = %s\n",macro.name.c_str(),macro.text.c_str());
+                    }
                 }
             }
+            if (DEBUG) printf("PC=%d\n",pc);
         }
-        if (DEBUG) printf("PC=%d\n",pc);
     }
     return 0;
 }
@@ -196,9 +203,15 @@ Address Assembler::parseAddress(std::string str) {
         
     }
     if (std::regex_match(str,labelPattern)) { // it's a label!
+        int location = -1;
+        for (Label l : labels) {
+            if (l.name == str) {
+                location = l.location;
+            }
+        }
         return (Address){
             ADDR_ABSOLUTE,
-            -1,
+            location,
             str
         };
     }
@@ -239,7 +252,7 @@ Instruction Assembler::parseInstruction(std::string line) {
     return inst;
 }
 
-AssembledInstruction Assembler::assembleInstruction(Instruction inst) {
+AssembledInstruction Assembler::assembleInstruction(Instruction inst, int pc) {
     AssembledInstruction out;
     out.orig = inst;
     for (const auto& [mnemonic, modes] : opcode_lut) {
@@ -257,6 +270,7 @@ AssembledInstruction Assembler::assembleInstruction(Instruction inst) {
                     out.bytes.push_back(inst.addr.location >> 8);
                 } else if (byte==RELATIVE_ADDR) {
                     // TODO: implement RELATIVE_ADDR
+                    out.bytes.push_back((inst.addr.location-(pc+2))&0xff);
                 } else {
                     out.bytes.push_back(byte & 0xff);
                 }

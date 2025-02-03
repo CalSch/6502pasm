@@ -15,25 +15,38 @@ std::regex zeropagePattern("\\$[0-9a-fA-F]{2}");   //  $LL (LL=low byte of addr)
 std::regex absolutePattern("\\$[0-9a-fA-F]{4}");   //  $HHLL (HHLL = full addr)
 // std::regex indirectPattern("\\(\\$[0-9a-fA-F]{4}\\)");
 
+
+void Assembler::insertOutputBytes(std::vector<unsigned char> bytes, int location) {
+    int endIndex = location + bytes.size() - 1;
+    while (endIndex>=output_bytes.size()) {
+        output_bytes.push_back(0);
+    }
+    for (int i=0;i<bytes.size();i++) {
+        output_bytes[location+i]=bytes[i];
+    }
+}
+
 int Assembler::assemble() {
+    int pc = 0; // keeps track of the current position in the binary
     for (int lineIdx=0;lineIdx<input_lines.size();lineIdx++) {
         std::string line = input_lines[lineIdx];
         bool hasComment = false;
         int commentIndex = -1;
-        for (int i=0;i<line.size();i++) {
+        for (int i=0;i<line.size();i++) { // find a semicolon
             if (line[i]==';') {
                 hasComment = true;
                 commentIndex = i;
                 break;
             }
         }
-        std::string lineNoComment = line.substr(0,commentIndex);
+        std::string lineNoComment = hasComment ? line.substr(0,commentIndex) : line;
         LineType lineType = getLineType(lineNoComment);
         if (lineType == LINE_UNKNOWN) {
             printf("Unknown line: '%s'\n",line.c_str());
         }
         if (lineType == LINE_LABEL) {
             Label label = parseLabel(lineNoComment);
+            label.location = pc;
             labels.push_back(label);
         }
         if (lineType == LINE_INSTRUCTION) {
@@ -47,6 +60,8 @@ int Assembler::assemble() {
                 }
                 printf("\n");
             }
+            insertOutputBytes(asmInst.bytes,pc);
+            pc += asmInst.bytes.size();
         }
         if (lineType == LINE_DIRECTIVE) {
             std::smatch m;
@@ -73,7 +88,9 @@ int Assembler::assemble() {
                 }
             }
             if (name=="org") {
-
+                if (args.size()>=1) {
+                    pc = std::stoi(args[0].substr(2));
+                }
             } else if (name=="macro") {
                 if (args.size()==2) {
                     Macro macro = (Macro){args[0],args[1]};
@@ -82,6 +99,7 @@ int Assembler::assemble() {
                 }
             }
         }
+        if (DEBUG) printf("PC=%d\n",pc);
     }
     return 0;
 }

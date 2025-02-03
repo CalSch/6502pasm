@@ -89,6 +89,8 @@ public:
 
     AssembledInstruction assembleInstruction(Instruction inst);
 
+    void insertOutputBytes(std::vector<unsigned char> bytes, int location);
+
     int assemble();
 };
 

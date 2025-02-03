@@ -5,11 +5,9 @@ A portable 6502 assembler written in C++
 I wanted to make a 6502 IDE for the M5Stack Cardputer (an ESP32 based computer), but I couldn't find an assembler that didn't rely on the underlying operating system (which the Cardputer doesn't have) so I'm making my own! I'm hoping to have a 6502 assembler contained in a single file (well, two files including the .h) while using minimal standard libraries (hopefully only stdio for sprintf, stdlib for malloc, and regex)
 
 ## Todo
-- Critical
-  - Actually output stuff
-  - Find label positions
 - Not-so-critical
   - Auto-allocate variables
+  - Math expressions (probably RPN)
   - Errors
   - Expand syntax
     - Decimal and binary numbers

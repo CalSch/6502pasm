@@ -3,7 +3,7 @@
 #include <vector>
 #include <regex>
 
-#define DEBUG 1
+#define DEBUG 0
 
 #define IS_HEX_CHAR(c) ((c>='0' && c<='9') || (c>='a' && c<='f') || (c>='A' && c<='F'))
 

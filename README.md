@@ -40,3 +40,46 @@ This is the class that contains the assembler. It has:
 - `std::vector<Label> labels`: A list of labels that were found
 - `std::vector<Macro> macros`: A list of macros that were found
 - `int assemble()`: Assembles the `input_lines` into the `output_bytes`. Returns 0 if successful, 1 if not.
+
+## Example
+```cpp
+#include "6502pasm.h"
+
+int main() {
+  Assembler assembler = Assembler();
+
+  // Loads some simple stuff into input_lines
+  assembler.input_lines.push_back(std::string(".org $0800"));
+  assembler.input_lines.push_back(std::string(".macro addr $05"));
+  assembler.input_lines.push_back(std::string("main:"));
+  assembler.input_lines.push_back(std::string(" lda #$2e ; comment"));
+  assembler.input_lines.push_back(std::string(" LDX $04 ; capital mnemonic"));
+  assembler.input_lines.push_back(std::string(" ldy %addr ; macro"));
+  assembler.input_lines.push_back(std::string(" jmp main ; uses a label"));
+
+  // Assemble it
+  assembler.assemble();
+
+  // Output it
+  printf("Output hex (%d bytes):\n",assembler.output_bytes.size());
+  for (int i=0;i<assembler.output_bytes.size();i++) {
+    if (i%8==0)
+      printf("  %02x: ",i);
+    printf("%02x ",assembler.output_bytes[i]);
+    if (i%8==7)
+      printf("\n");
+  }
+  printf("\n");
+  printf("Labels (%d labels):\n",assembler.labels.size());
+  for (Label l : assembler.labels) {
+    printf("  %s @ 0x%04x\n",l.name.c_str(),l.location);
+  }
+  printf("Macros (%d macros):\n",assembler.macros.size());
+  for (Macro m : assembler.macros) {
+    printf("  %s = '%s'\n",m.name.c_str(),m.text.c_str());
+  }
+
+  return 0;
+}
+```
+You can also look at [test/main.cpp](https://github.com/CalSch/6502pasm/blob/master/test/main.cpp)
